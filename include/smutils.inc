@@ -21,14 +21,16 @@
 
 #define __SourceMod_UTILs__
 
-#define SMUtils_Version "1.1.1"
+#define SMUtils_Version "1.2.0"
 #define SMUtils_Author  "Kyle"
 #define SMUtils_URL     "https://github.com/Kxnrl/sourcemod-utils"
 
 #define CONSOLE    0
 #define MinClients 1
 
+#undef REQUIRE_EXTENSIONS
 #include <sdktools>
+#define REQUIRE_EXTENSIONS
 
 #if !defined DMG_HEADSHOT
     #define DMG_HEADSHOT (1 << 31)
@@ -725,16 +727,7 @@ stock void Hint(int client, const char[] buffer, any ...)
     SetGlobalTransTarget(client);
     VFormat(msg, 256, buffer, 3);
     
-    Protobuf HintText = view_as<Protobuf>(StartMessageOne("HintText", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(HintText == null)
-    {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessageOne -> HintText is null");
-        return;
-    }
-
-    HintText.SetString("text", msg);
-
-    EndMessage();
+    SMUtils_Hint(client, msg);
 
     SetGlobalTransTarget(LANG_SERVER);
 }
@@ -743,16 +736,20 @@ stock void HintAll(const char[] buffer, any ...)
 {
     char msg[256];
     VFormat(msg, 256, buffer, 2);
-    
-    Protobuf HintText = view_as<Protobuf>(StartMessageAll("HintText", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(HintText == null)
-    {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessageAll -> HintText is null");
-        return;
-    }
 
-    HintText.SetString("text", msg);
-    EndMessage();
+    if(UMType == UM_Protobuf)
+    {
+        Protobuf HintText = view_as<Protobuf>(StartMessageAll("HintText", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.SetString("text", msg);
+        EndMessage();
+    }
+    else
+    {
+        BfWrite HintText = view_as<BfWrite>(StartMessageAll("HintText", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.WriteByte(1);
+        HintText.WriteString(msg);
+        EndMessage();
+    }
 }
 
 stock void HintEx(int[] clients, int numClients, const char[] buffer, any ...)
@@ -760,15 +757,19 @@ stock void HintEx(int[] clients, int numClients, const char[] buffer, any ...)
     char msg[256];
     VFormat(msg, 256, buffer, 3);
 
-    Protobuf HintText = view_as<Protobuf>(StartMessage("HintText", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(HintText == null)
+    if(UMType == UM_Protobuf)
     {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessage -> HintText is null");
-        return;
+        Protobuf HintText = view_as<Protobuf>(StartMessage("HintText", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.SetString("text", msg);
+        EndMessage();
     }
-
-    HintText.SetString("text", msg);
-    EndMessage();
+    else
+    {
+        BfWrite HintText = view_as<BfWrite>(StartMessage("HintText", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.WriteByte(1);
+        HintText.WriteString(msg);
+        EndMessage();
+    }
 }
 
 stock void tHintAll(const char[] buffer, any ...)
@@ -780,21 +781,28 @@ stock void tHintAll(const char[] buffer, any ...)
             SetGlobalTransTarget(client);
             VFormat(msg, 256, buffer, 2);
 
-            Protobuf HintText = view_as<Protobuf>(StartMessageOne("HintText", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-            if(HintText == null)
-            {
-                LogError("StartMessageOne -> HintText is null");
-                continue;
-            }
-
-            HintText.SetString("text", msg);
-
-            EndMessage();
+            SMUtils_Hint(client, msg);
         }
 
     SetGlobalTransTarget(LANG_SERVER);
 }
 
+stock void SMUtils_Hint(int client, const char[] msg)
+{
+    if(UMType == UM_Protobuf)
+    {
+        Protobuf HintText = view_as<Protobuf>(StartMessageOne("HintText", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.SetString("text", msg);
+        EndMessage();
+    }
+    else
+    {
+        BfWrite HintText = view_as<BfWrite>(StartMessageOne("HintText", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        HintText.WriteByte(1);
+        HintText.WriteString(msg);
+        EndMessage();
+    }
+}
 
 /**************************
             TextMsg
@@ -815,22 +823,8 @@ stock void Text(int client, const char[] buffer, any ...)
     char msg[256];
     SetGlobalTransTarget(client);
     VFormat(msg, 256, buffer, 3);
-    
-    Protobuf TextMsg = view_as<Protobuf>(StartMessageOne("TextMsg", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(TextMsg == null)
-    {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessageOne -> TextMsg is null");
-        return;
-    }
 
-    TextMsg.SetInt("msg_dst", TextMsgDest); 
-    TextMsg.AddString("params", msg);
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-
-    EndMessage();
+    SMUtils_Text(client, msg);
 
     SetGlobalTransTarget(LANG_SERVER);
 }
@@ -839,22 +833,29 @@ stock void TextAll(const char[] buffer, any ...)
 {
     char msg[256];
     VFormat(msg, 256, buffer, 2);
-    
-    Protobuf TextMsg = view_as<Protobuf>(StartMessageAll("TextMsg", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(TextMsg == null)
+
+    if(UMType == UM_Protobuf)
     {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessageAll -> TextMsg is null");
-        return;
+        Protobuf TextMsg = view_as<Protobuf>(StartMessageAll("TextMsg", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.SetInt("msg_dst", TextMsgDest); 
+        TextMsg.AddString("params", msg);
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        EndMessage();
     }
-
-    TextMsg.SetInt("msg_dst", TextMsgDest); 
-    TextMsg.AddString("params", msg);
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-
-    EndMessage();
+    else
+    {
+        BfWrite TextMsg = view_as<BfWrite>(StartMessageAll("TextMsg", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.WriteByte(TextMsgDest); 
+        TextMsg.WriteString(msg);
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        EndMessage();
+    }
 }
 
 stock void TextEx(int[] clients, int numClients, const char[] buffer, any ...)
@@ -862,21 +863,28 @@ stock void TextEx(int[] clients, int numClients, const char[] buffer, any ...)
     char msg[256];
     VFormat(msg, 256, buffer, 3);
 
-    Protobuf TextMsg = view_as<Protobuf>(StartMessage("TextMsg", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-    if(TextMsg == null)
+    if(UMType == UM_Protobuf)
     {
-        ThrowNativeError(SP_ERROR_NATIVE, "StartMessage -> TextMsg is null");
-        return;
+        Protobuf TextMsg = view_as<Protobuf>(StartMessage("TextMsg", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.SetInt("msg_dst", TextMsgDest); 
+        TextMsg.AddString("params", msg);
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        EndMessage();
     }
-
-    TextMsg.SetInt("msg_dst", TextMsgDest); 
-    TextMsg.AddString("params", msg);
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-    TextMsg.AddString("params", "");
-
-    EndMessage();
+    else
+    {
+        BfWrite TextMsg = view_as<BfWrite>(StartMessage("TextMsg", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.WriteByte(TextMsgDest); 
+        TextMsg.WriteString(msg);
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        EndMessage();
+    }
 }
 
 stock void tTextAll(const char[] buffer, any ...)
@@ -888,24 +896,36 @@ stock void tTextAll(const char[] buffer, any ...)
             SetGlobalTransTarget(client);
             VFormat(msg, 256, buffer, 2);
 
-            Protobuf TextMsg = view_as<Protobuf>(StartMessageOne("TextMsg", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-            if(TextMsg == null)
-            {
-                LogError("StartMessageOne -> TextMsg is null");
-                continue;
-            }
-
-            TextMsg.SetInt("msg_dst", TextMsgDest); 
-            TextMsg.AddString("params", msg);
-            TextMsg.AddString("params", "");
-            TextMsg.AddString("params", "");
-            TextMsg.AddString("params", "");
-            TextMsg.AddString("params", "");
-
-            EndMessage();
+            SMUtils_Text(client, msg);
         }
 
     SetGlobalTransTarget(LANG_SERVER);
+}
+
+stock void SMUtils_Text(int client, const char[] msg)
+{
+    if(UMType == UM_Protobuf)
+    {
+        Protobuf TextMsg = view_as<Protobuf>(StartMessageOne("TextMsg", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.SetInt("msg_dst", TextMsgDest); 
+        TextMsg.AddString("params", msg);
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        TextMsg.AddString("params", "");
+        EndMessage();
+    }
+    else
+    {
+        BfWrite TextMsg = view_as<BfWrite>(StartMessageOne("TextMsg", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        TextMsg.WriteByte(TextMsgDest); 
+        TextMsg.WriteString(msg);
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        TextMsg.WriteString("");
+        EndMessage();
+    }
 }
 
 
