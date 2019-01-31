@@ -746,7 +746,6 @@ stock void HintAll(const char[] buffer, any ...)
     else
     {
         BfWrite HintText = view_as<BfWrite>(StartMessageAll("HintText", USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-        HintText.WriteByte(1);
         HintText.WriteString(msg);
         EndMessage();
     }
@@ -766,7 +765,6 @@ stock void HintEx(int[] clients, int numClients, const char[] buffer, any ...)
     else
     {
         BfWrite HintText = view_as<BfWrite>(StartMessage("HintText", clients, numClients, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-        HintText.WriteByte(1);
         HintText.WriteString(msg);
         EndMessage();
     }
@@ -798,7 +796,6 @@ stock void SMUtils_Hint(int client, const char[] msg)
     else
     {
         BfWrite HintText = view_as<BfWrite>(StartMessageOne("HintText", client, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
-        HintText.WriteByte(1);
         HintText.WriteString(msg);
         EndMessage();
     }
