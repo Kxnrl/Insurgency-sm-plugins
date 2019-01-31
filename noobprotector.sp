@@ -21,7 +21,6 @@ public void OnPluginStart()
     SMUtils_SetChatPrefix("[{purple}魔法少女{white}]");
     SMUtils_SetChatSpaces("   ");
 
-    // Supply
     HookEvent("player_spawn", Event_Spawn, EventHookMode_Post);
 
     for(int client = MinClients; client <= MaxClients; ++client)
@@ -38,7 +37,9 @@ public void Event_Spawn(Event e, const char[] name, bool db)
 {
     int client = GetClientOfUserId(e.GetInt("userid"));
     g_fSpawnTime[client] = GetGameTime();
-    Chat(client, "{pink}你现在有8秒的出生点爆炸物保护时间.");
+    
+    //if(IsPlayerAlive(client))
+    //Chat(client, "{pink}你现在有8秒的出生点爆炸物保护时间.");
 }
 
 public Action Event_TraceAlive(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
