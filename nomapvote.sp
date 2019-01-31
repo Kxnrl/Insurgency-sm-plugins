@@ -65,8 +65,12 @@ public Action Command_CallVote(int client, const char[] cmd, int args)
 
     if(strncmp(command[0], "ChangeLevel", strlen(command[0]), false) == 0)
     {
-        Chat(client, "{red}你这种P民还想投票换图?");
-        return Plugin_Handled;
+        if(StrContains(command[1], "_night", false) != -1)
+        {
+            Chat(client, "{red}你这种P民还想投票换夜战图?");
+            return Plugin_Handled;
+        }
+        return Plugin_Continue;
     }
 
     return Plugin_Continue;
