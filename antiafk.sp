@@ -56,6 +56,8 @@ public Action Timer_CheckPlayers(Handle timer, any unused)
                 continue;
             }
             Chat(client, "{red}警告{silver}:  {green}长时间无操作将会被踢出游戏{silver}.");
+            Text(client, "[警告]\n长时间无操作将会被踢出游戏");
+            Hint(client, "[警告]\n长时间无操作将会被踢出游戏");
         }
         g_Client[client].m_IsAFK = true;
     }
