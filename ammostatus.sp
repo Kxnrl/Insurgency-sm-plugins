@@ -32,6 +32,8 @@ public void OnPluginStart()
     if(GetEngineVersion() != Engine_Insurgency)
         SetFailState("This plugin only work for Insurgency:Source.");
     
+    SMUitls_InitUserMessage();
+    
     HookEvent("weapon_reload",  Event_Weapon, EventHookMode_Post);
     HookEvent("weapon_fire",    Event_Weapon, EventHookMode_Post);
     HookEvent("weapon_pickup",  Event_Weapon, EventHookMode_Post);
@@ -99,19 +101,19 @@ static void CheckWeapon(int client, int m_hActiveWeapon = -1)
         if(GetEntData(m_hActiveWeapon, g_iAmmoOffset, 1))
             m_iClip1++;
 
-        PrintHintText(client, " %d / %d ", m_iClip1, GetMaxClip(m_hActiveWeapon));
+        Hint(client, " %d / %d ", m_iClip1, GetMaxClip(m_hActiveWeapon));
         return;
     }
 
     // Knife
     if(GetPlayerWeaponSlot(client, 2) == m_hActiveWeapon)
     {
-        PrintHintText(client, " 1 / 1 ");
+        Hint(client, " 1 / 1 ");
         return;
     }
 
     // Items / Nades & more
-    PrintHintText(client, " 1 / %d ", GetMaxItem(client, m_hActiveWeapon));
+    Hint(client, " 1 / %d ", GetMaxItem(client, m_hActiveWeapon));
 }
 
 static int GetMaxClip(int weapon)
