@@ -29,7 +29,6 @@ enum struct arrays_t
 
 enum struct client_t
 {
-    int   m_CIdx
     int   m_CPId;
     int   m_CRank;
     float m_CScore;
@@ -40,14 +39,16 @@ static client_t g_Client[MAXPLAYERS+1];
 
 static int g_iServerMod = -1;
 
-#define CheckMod() if(g_iServerMod != 1001 && g_iServerMod != 1002) return
+static Handle g_tTimeout;
+
+#define CheckMod() if (g_iServerMod != 1001 && g_iServerMod != 1002) return
 
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();
     SMUtils_SetChatPrefix("[{purple}魔法少女{white}]");
     SMUtils_SetChatSpaces("   ");
-    
+
     g_Arrays.m_Index = new ArrayList(1);
     g_Arrays.m_Score = new ArrayList(9);
     
@@ -71,11 +72,21 @@ public Action Timer_RefreshData(Handle tiemr)
 
 static void fetchFromDB()
 {
-    CheckMod();
+    //CheckMod();
 
     kMessager_InitBuffer();
     kMessager_WriteShort("mid", g_iServerMod);
     kMessager_SendBuffer(Stats_IS_LoadAll);
+    
+    g_tTimeout = CreateTimer(30.0, Timer_Timeout);
+}
+
+public Action Timer_Timeout(Handle timer)
+{
+    g_tTimeout = null;
+    fetchFromDB();
+    LogError("fetchFromDB -> timeout");
+    return Plugin_Stop;
 }
 
 public void KCF_OnClientLoaded(int client, int pid)
@@ -86,7 +97,7 @@ public void KCF_OnClientLoaded(int client, int pid)
 static void fetchClientData(int pid)
 {
     int client = KCF_Client_FindByPId(pid);
-    if(client == -1)
+    if (client == -1)
         return;
 
     kMessager_InitBuffer();
@@ -94,9 +105,8 @@ static void fetchClientData(int pid)
     kMessager_SendBuffer(Stats_IS_LoadUser);
 
     int _i = g_Arrays.m_Index.FindValue(pid);
-    if(_i > 0)
+    if (_i > 0)
     {
-        g_Client[client].m_CIdx   = _i;
         g_Client[client].m_CPId   = pid;
         g_Client[client].m_CRank  = _i;
         g_Client[client].m_CScore = g_Arrays.m_Score.Get(_i);
@@ -117,23 +127,25 @@ static void LoadClientData()
     int pid = kMessager_ReadInt32("pid");
 
     int client = KCF_Client_FindByPId(pid);
-    if(client == -1)
+    if (client == -1)
         return;
 
     // to do
     // ......
 
     // printMessage
-    CreateTimer(8.0, Timer_Welcome, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+    CreateTimer(5.0, Timer_Welcome, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void LoadAllData()
 {
-    if(!kMessager_ReadArray())
+    if (!kMessager_ReadArray())
     {
         LogError("array data is not an array?");
         return;
     }
+    
+    StopTimer(g_tTimeout);
     
     g_Arrays.m_Index.Clear();
     g_Arrays.m_Score.Clear();
@@ -156,8 +168,6 @@ static void LoadAllData()
         g_Arrays.m_Total++;
     }
     while (kMessager_NextArray());
-
-    PrintToServer("[Insurgency]  Score/Skill Point has been loaded. total: %d", g_Arrays.m_Total);
 }
 
 public void OnClientConnected(int client)
@@ -172,7 +182,6 @@ public void OnClientDisconnect_Post(int client)
 
 static void resetClient(int client)
 {
-    g_Client[client].m_CIdx   = -1;
     g_Client[client].m_CPId   = -1;
     g_Client[client].m_CRank  = -1;
     g_Client[client].m_CScore = 0.0;
@@ -186,16 +195,27 @@ public Action Timer_Welcome(Handle timer, int userid)
 
 static void printMessage(int client)
 {
-    if(client == 0) return;
+    if (client == 0) return;
 
     static char hostname[128];
-    FindConVar("hostname").GetString(hostname, 128);
+    if (!hostname[0]) FindConVar("hostname").GetString(hostname, 128);
+
     Chat(client, "{green}欢迎来到 {white}[{lime}%s{white}] {green}服务器", hostname);
     Chat(client, "{green}本服务器已启用技巧分/数据统计.");
-    if(g_Client[client].m_CIdx > 0)
+
+    if (g_Client[client].m_CRank > 0)
     {
-        Chat(client, "{green}您的技巧分为{silver}: {blue}%.2f {green}分", g_Client[client].m_CScore);
-        Chat(client, "{green}您的总排名为{silver}: {blue} %d {silver}/{green} %d", g_Client[client].m_CRank, g_Arrays.m_Total);
+        if (g_Client[client].m_CRank < 100)
+        {
+            SMUtils_SkipNextPrefix();
+            ChatAll(" {purple} ▲ {green}欢迎dalao {orange}%N {green} 进入游戏, 排名 {blue} %d {silver}/{green} %d", client, g_Client[client].m_CRank, g_Arrays.m_Total);
+            Chat(client, "{green}您的技巧分为{silver}: {blue}%.2f {green}分", g_Client[client].m_CScore);
+        }
+        else
+        {
+            Chat(client, "{green}您的技巧分为{silver}: {blue}%.2f {green}分", g_Client[client].m_CScore);
+            Chat(client, "{green}您的总排名为{silver}: {blue} %d {silver}/{green} %d", g_Client[client].m_CRank, g_Arrays.m_Total);
+        }
     }
     else
     {
