@@ -29,7 +29,7 @@ static Handle g_SDKGetClip;
 
 public void OnPluginStart()
 {
-    if(GetEngineVersion() != Engine_Insurgency)
+    if (GetEngineVersion() != Engine_Insurgency)
         SetFailState("This plugin only work for Insurgency:Source.");
     
     SMUitls_InitUserMessage();
@@ -49,7 +49,7 @@ public void OnPluginStart()
     g_SDKGetClip = EndPrepSDKCall();
 
     for(int client = MinClients; client <= MaxClients; ++client)
-        if(IsClientInGame(client))
+        if (IsClientInGame(client))
             OnClientPutInServer(client);
 }
 
@@ -73,7 +73,7 @@ public void Event_WeaponPost(int client, int weapon)
 public Action Timer_Weapon(Handle timer)
 {
     for(int client = MinClients; client <= MaxClients; ++client)
-        if(ClientIsAlive(client))
+        if (ClientIsAlive(client))
             CheckWeapon(client);
     return Plugin_Continue;
 }
@@ -81,24 +81,24 @@ public Action Timer_Weapon(Handle timer)
 static void CheckUserId(int client)
 {
     client = GetClientOfUserId(client);
-    if(ClientIsAlive(client))
+    if (ClientIsAlive(client))
         CheckWeapon(client);
 }
 
 static void CheckWeapon(int client, int m_hActiveWeapon = -1)
 {
-    if(m_hActiveWeapon == -1)
+    if (m_hActiveWeapon == -1)
         m_hActiveWeapon = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
 
-    if(!IsValidEdict(m_hActiveWeapon))
+    if (!IsValidEdict(m_hActiveWeapon))
         return;
     
     // Guns
-    if(GetPlayerWeaponSlot(client, 0) == m_hActiveWeapon || GetPlayerWeaponSlot(client, 1) == m_hActiveWeapon)
+    if (GetPlayerWeaponSlot(client, 0) == m_hActiveWeapon || GetPlayerWeaponSlot(client, 1) == m_hActiveWeapon)
     {
         int m_iClip1 = GetEntProp(m_hActiveWeapon, Prop_Send, "m_iClip1", 1);
 
-        if(GetEntData(m_hActiveWeapon, g_iAmmoOffset, 1))
+        if (GetEntData(m_hActiveWeapon, g_iAmmoOffset, 1))
             m_iClip1++;
 
         Hint(client, " %d / %d ", m_iClip1, GetMaxClip(m_hActiveWeapon));
@@ -106,7 +106,7 @@ static void CheckWeapon(int client, int m_hActiveWeapon = -1)
     }
 
     // Knife
-    if(GetPlayerWeaponSlot(client, 2) == m_hActiveWeapon)
+    if (GetPlayerWeaponSlot(client, 2) == m_hActiveWeapon)
     {
         Hint(client, " 1 / 1 ");
         return;
@@ -124,7 +124,7 @@ static int GetMaxClip(int weapon)
 static int GetMaxItem(int client, int item)
 {
     int m_iPrimaryAmmoType = GetEntProp(item, Prop_Send, "m_iPrimaryAmmoType");
-    if(m_iPrimaryAmmoType == -1)
+    if (m_iPrimaryAmmoType == -1)
         return -1;
 
     return GetEntProp(client, Prop_Send, "m_iAmmo", _, m_iPrimaryAmmoType);

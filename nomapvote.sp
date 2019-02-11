@@ -23,13 +23,13 @@ public void OnPluginStart()
     SMUtils_SetChatSpaces("   ");
     SMUtils_SetChatConSnd(true);
 
-    if(!AddCommandListener(Command_CallVote, "callvote"))
+    if (!AddCommandListener(Command_CallVote, "callvote"))
         SetFailState("Failed to Hook command \"callvote\".");
     
     BuildPath(Path_SM, logFile, 128, "logs/callvote.log");
     
     mp_gamemode = FindConVar("mp_gamemode");
-    if(mp_gamemode == null)
+    if (mp_gamemode == null)
         SetFailState("Failed to FindConVar \"mp_gamemode\".");
 }
 
@@ -42,7 +42,7 @@ callvote SwapTeams
 */
 public Action Command_CallVote(int client, const char[] cmd, int args)
 {
-    if(!client || args < 1) return Plugin_Continue;
+    if (!client || args < 1) return Plugin_Continue;
     
     char command[2][32];
     GetCmdArg(1, command[0], 32);
@@ -57,15 +57,15 @@ public Action Command_CallVote(int client, const char[] cmd, int args)
         strcmp(mode, "hunt")        == 0 ||
         strcmp(mode, "outpost")     == 0 ||
         strcmp(mode, "survival")    == 0
-        )
+       )
     {
         // PVE
         return Plugin_Continue;
     }
 
-    if(strncmp(command[0], "ChangeLevel", strlen(command[0]), false) == 0)
+    if (strncmp(command[0], "ChangeLevel", strlen(command[0]), false) == 0)
     {
-        if(StrContains(command[1], "_night", false) != -1)
+        if (StrContains(command[1], "_night", false) != -1)
         {
             Chat(client, "{red}你这种P民还想投票换夜战图?");
             return Plugin_Handled;

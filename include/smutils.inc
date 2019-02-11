@@ -21,7 +21,7 @@
 
 #define __SourceMod_UTILs__
 
-#define SMUtils_Version "1.2.0"
+#define SMUtils_Version "1.2.1"
 #define SMUtils_Author  "Kyle"
 #define SMUtils_URL     "https://github.com/Kxnrl/sourcemod-utils"
 
@@ -36,6 +36,9 @@
     #define DMG_HEADSHOT (1 << 31)
 #endif
 
+#if !defined IN_ACCESSORY
+    #define IN_ACCESSORY (1 << 28)
+#endif
 
 /**************************
             Global
@@ -407,6 +410,9 @@ stock void SMUtils_SetChatConSnd(bool consnd)
 // set next chat stop sound and log
 stock void SMUtils_SkipNextChatCS()
 {
+    if(GameEngine == Engine_Insurgency || GameEngine == Engine_Left4Dead2)
+        return;
+
     SkipNextChatCS = true;
 }
 
@@ -1075,7 +1081,7 @@ methodmap InstructorHud < Event
     public void color(int r, int g, int b)
     {
         char clr[32];
-        FormatEx(clr, 32, "%d %d %d", r, g, b);
+        FormatEx(clr, 32, "%d,%d,%d", r, g, b);
         this.SetString("hint_color", clr);
     }
 
@@ -1091,7 +1097,7 @@ methodmap InstructorHud < Event
         e.SetInt("hint_activator_userid", 0);
         e.SetInt("hint_target", target);
 
-        if(name[0] == 0)
+        if(name[0] != 0)
         {
             e.SetString("hint_name", name);
             e.SetString("hint_replace_key", name);
