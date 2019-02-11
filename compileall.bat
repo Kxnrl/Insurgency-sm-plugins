@@ -14,8 +14,12 @@ echo building antiafk
 spcomp.exe -E -v0 antiafk.sp        -o"./compiled/antiafk.smx"
 
 echo.
-echo building supplypoint
-spcomp.exe -E -v0 supplypoint.sp    -o"./compiled/supplypoint.smx"
+echo building infiniteweight
+spcomp.exe -E -v0 infiniteweight.sp -o"./compiled/infiniteweight.smx"
+
+echo.
+echo building noaccessory
+spcomp.exe -E -v0 noaccessory.sp    -o"./compiled/noaccessory.smx"
 
 echo.
 echo building nomapvote
@@ -28,6 +32,10 @@ spcomp.exe -E -v0 noobprotector.sp  -o"./compiled/noobprotector.smx"
 echo.
 echo building stats
 spcomp.exe -E -v0 stats.sp          -o"./compiled/stats.smx"
+
+echo.
+echo building supplypoint
+spcomp.exe -E -v0 supplypoint.sp    -o"./compiled/supplypoint.smx"
 
 echo.
 pause
