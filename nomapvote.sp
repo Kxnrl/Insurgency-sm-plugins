@@ -16,6 +16,8 @@ static char logFile[128];
 
 static ConVar mp_gamemode = null;
 
+static ArrayList histories = null;
+
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();
@@ -31,6 +33,18 @@ public void OnPluginStart()
     mp_gamemode = FindConVar("mp_gamemode");
     if (mp_gamemode == null)
         SetFailState("Failed to FindConVar \"mp_gamemode\".");
+    
+    histories = new ArrayList(ByteCountToCells(128));
+}
+
+public void OnMapStart()
+{
+    char map[128];
+    GetCurrentMap(map, 128);
+    histories.PushString(map);
+    
+    if (histories.Length > 3)
+        histories.Erase(0);
 }
 
 /* Syntax 
@@ -67,9 +81,20 @@ public Action Command_CallVote(int client, const char[] cmd, int args)
     {
         if (StrContains(command[1], "_night", false) != -1)
         {
-            Chat(client, "{red}你这种P民还想投票换夜战图?");
-            return Plugin_Handled;
+            char map[128];
+
+            for (int index = 0; index < histories.Length; ++index)
+            {
+                histories.GetString(index, map, 128);
+
+                if (StrContains(map, "_night", false) != -1)
+                {
+                    Chat(client, "{red}最近3张地图以内已经玩过夜战图了.");
+                    return Plugin_Handled;
+                }
+            }
         }
+
         return Plugin_Continue;
     }
 
