@@ -5,6 +5,8 @@
 #include <smutils>
 #include <sdkhooks>
 
+#include <insurgency>
+
 public Plugin myinfo = 
 {
     name        = "Noob Protector",
@@ -13,24 +15,6 @@ public Plugin myinfo =
     version     = "1.0",
     url         = "https://www.kxnrl.com"
 };
-
-enum CINSGearType
-{
-    m_Gear_Armor  = 0, // 2 4
-    m_Gear_Helmet = 1, // ?
-    m_Gear_Pack   = 2, // 6 8
-    m_Gear_Glass  = 3, // 10
-    m_Gear_Recon  = 4, // ?
-    //m_Gear_Unknow = 5,
-    //m_Gear_Unknow = 6,
-}
-
-enum CINSArmorType
-{
-    Armor_None  = -1,
-    Armor_Light = 2,
-    Armor_Heavy = 4
-}
 
 static float g_fSpawnTime[MAXPLAYERS+1];
 

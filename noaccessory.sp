@@ -2,6 +2,9 @@
 #pragma newdecls required
 
 #include <smutils>
+#include <sdkhooks>
+
+#include <insurgency>
 
 public Plugin myinfo = 
 {
@@ -12,7 +15,8 @@ public Plugin myinfo =
     url         = "https://www.kxnrl.com"
 };
 
-static int g_iTotalUsed[MAXPLAYERS+1];
+
+static int g_iOffset = -1;
 
 public void OnPluginStart()
 {
@@ -20,49 +24,44 @@ public void OnPluginStart()
     SMUtils_SetChatPrefix("[{purple}魔法少女{white}]");
     SMUtils_SetChatSpaces("   ");
 
-    HookEvent("player_spawn", Event_Spawn, EventHookMode_Post);
-
-    for (int client = MinClients; client <= MaxClients; ++client)
-        if (IsClientConnected(client))
-            OnClientConnected(client);
+    g_iOffset = FindSendPropInfo("CINSPlayer", "m_EquippedGear");
 }
 
-public void OnClientConnected(int client)
+public void OnEntityCreated(int entity, const char[] classname)
 {
-    g_iTotalUsed[client] = 0;
-}
-
-public void Event_Spawn(Event e, const char[] name, bool db)
-{
-    int client = GetClientOfUserId(e.GetInt("userid"));
-    g_iTotalUsed[client] = 0;
-}
-
-public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
-{
-    if (IsPlayerAlive(client))
+    if (strcmp(classname, "sec_nightvision") == 0 || strcmp(classname, "ins_nightvision") == 0)
     {
-        if (buttons & IN_ACCESSORY)
+        // 1 frame
+        RequestFrame(Frame_Created, EntIndexToEntRef(entity));
+    }
+}
+
+void Frame_Created(int ref)
+{
+    int entity = EntRefToEntIndex(ref);
+
+    if (!IsValidEntity(entity))
+        return;
+
+    int owner = GetEntPropEnt(entity, Prop_Data, "m_hOwnerEntity");
+
+    if (ClientIsValid(owner))
+    {
+        if (HasPlayerAccessory(owner))
         {
-            static int nextPrint[MAXPLAYERS+1];
-            
-            buttons &= ~IN_ACCESSORY;
-            
-            int time = GetTime();
+            Chat(owner, "{red}本服务器已禁用夜视仪");
+            EasyMissionHint(owner, 20.0, Icon_alert_red, 233, 0, 0, "本服务器禁止使用夜视仪");
 
-            if (time > nextPrint[client])
-            {
-                EasyMissionHint(client, 10.0, Icon_alert_red, 233, 0, 0, "本服务器禁止使用夜视仪");
-                nextPrint[client] = time + 15;
-            }
-
-            if (++g_iTotalUsed[client] > 3)
-            {
-                EasyMissionHint(client, 10.0, Icon_alert_red, 233, 0, 0, "您因为试图卡BUG被处死");
-                ForcePlayerSuicide(client);
-            }
+            SetEntData(owner, g_iOffset + (4 * view_as<int>(m_Gear_Glass)), -1, 4, true);
         }
+        else
+            LogError("Found nvgs but wrong ent data on owner class base.");
     }
 
-    return Plugin_Continue;
+    AcceptEntityInput(entity, "KillHierarchy");
+}
+
+stock bool HasPlayerAccessory(int client)
+{
+    return view_as<CINSGearGlass>(GetEntData(client, g_iOffset + (4 * view_as<int>(m_Gear_Glass)))) == m_Glass_Nvgs;
 }
