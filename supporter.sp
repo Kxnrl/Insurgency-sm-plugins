@@ -22,10 +22,11 @@ public Plugin myinfo =
 
 enum struct data_t
 {
-    bool m_bCarry;
     bool m_Loaded;
     vip_t m_VIP;
     int m_Expired;
+    bool m_bWeight;
+    int m_iWeight;
 };
 
 data_t g_Client[MAXPLAYERS+1];
@@ -60,8 +61,9 @@ public void OnPluginStart()
 
     g_iServerMod = KCF_Server_GetModId();
 
-    HookEvent("player_spawn",   Event_Join, EventHookMode_Post);
-    HookEvent("exit_spawnzone", Event_Exit, EventHookMode_Post);
+    HookEvent("player_spawn",   Event_Spawned, EventHookMode_Post);
+    HookEvent("player_team",    Event_Team,    EventHookMode_Post);
+    HookEvent("weapon_deploy",  Event_Deploy,  EventHookMode_Post);
 }
 
 public void KCF_OnServerLoaded(int sid, int mod)
@@ -151,43 +153,94 @@ public Action WelcomeMessage(Handle timer, int userid)
         case vip_None: Chat(client, "{green}您还不是我们的支持者, 加入支持者计划可以享受相应的福利待遇, 详情请加QQ群[{red}385224955{green}].");
         default:
         {
-            int level = view_as<int>(g_Client[client].m_VIP);
-            Chat(client, "{green}欢迎回来, 您的支持者计划到期时间为: {orange}%s {green}, Level: {orange} %d", GetExpiredTime(client), level);
-            int tokens = GetEntProp(client, Prop_Send, "m_nRecievedTokens");
-            int counts = 0;
-            switch (g_iServerMod)
-            {
-                case 1002: counts = RoundToFloor(level * 1.5);
-                case 1050: counts = RoundToFloor(level * 2.1);
-                case 1051: counts = RoundToFloor(level * 2.8);
-                case 1052: counts = RoundToFloor(level * 3.5);
-                default  : counts = level;
-            }
-            SetEntProp(client, Prop_Send, "m_nRecievedTokens", tokens + counts);
-            Chat(client, "{red}>{green}>{blue}> {yellow}支持者计划: {lime}您可以获得额外的 {purple}%d{lime} 补给点.", counts);
+            Chat(client, "{green}欢迎回来, 您的支持者计划到期时间为: {orange}%s {green}, Level: {orange} %d", GetExpiredTime(client), view_as<int>(g_Client[client].m_VIP));
+            EarnSupplyPoint(client);
         }
     }
 
     return Plugin_Stop;
 }
 
-public void Event_Join(Event e, const char[] name, bool dB)
-{
-    g_Client[GetClientOfUserId(e.GetInt("userid"))].m_bCarry = false;
-}
-
-public void Event_Exit(Event e, const char[] name, bool dB)
+public void Event_Spawned(Event e, const char[] name, bool dB)
 {
     int client = GetClientOfUserId(e.GetInt("userid"));
-    if (g_Client[client].m_bCarry)
+    g_Client[client].m_bWeight = false;
+    g_Client[client].m_iWeight = GetEntProp(client, Prop_Send, "m_iCarryWeight");
+}
+
+public void Event_Deploy(Event e, const char[] name, bool dB)
+{
+    RequestFrame(FrameWeight, e.GetInt("userid"));
+}
+
+static void FrameWeight(int userid)
+{
+    static nextPrint[MAXPLAYERS+1];
+
+    int client = GetClientOfUserId(userid);
+
+    float ReduceWeight = DecreaseWeight(client);
+    int m_iCarryWeight = GetEntProp(client, Prop_Send, "m_iCarryWeight");
+    int m_nWeightCache = GetEntProp(client, Prop_Send, "m_nWeightCache");
+    int m_nCarryWeight = m_iCarryWeight;
+    
+    if (m_iCarryWeight == m_nWeightCache)
+    {
+        m_iCarryWeight = RoundToCeil(m_nWeightCache * (1.0 - ReduceWeight));
+    }
+    else if (g_Client[client].m_bWeight)
+    {
+        int diff = g_Client[client].m_iWeight - m_iCarryWeight;
+        int curl = RoundToCeil(diff * (1.0 - ReduceWeight));
+        m_iCarryWeight = g_Client[client].m_iWeight - curl;
+    }
+    else
+    {
+        m_iCarryWeight = RoundToCeil(m_iCarryWeight * (1.0 - ReduceWeight)); 
+    }
+
+    int timestamp = GetTime();
+
+    if (nextPrint[client] <= timestamp)
+    {
+        nextPrint[client] += 5;
+        SetEntProp(client, Prop_Send, "m_iCarryWeight", m_iCarryWeight);
+        Chat(client, "{red}>{green}>{blue}> {yellow}支持者计划: {lime}负重已减轻{green}%d%%{lime}[{green}%.1fkg{lime}({yellow}%.1f{lime})]", RoundToCeil(ReduceWeight * 100), m_iCarryWeight * 0.1, m_nCarryWeight * 0.1);
+    }
+
+    g_Client[client].m_bWeight = true;
+    g_Client[client].m_iWeight = GetEntProp(client, Prop_Send, "m_iCarryWeight");
+}
+
+public void Event_Team(Event e, const char[] name, bool dB)
+{
+    if (e.GetBool("disconnect") || e.GetInt("oldteam") == e.GetInt("team"))
         return;
 
-    g_Client[client].m_bCarry = true;
+    EarnSupplyPoint(GetClientOfUserId(e.GetInt("userid")));
+}
 
+static void EarnSupplyPoint(int client)
+{
+    int levels = view_as<int>(g_Client[client].m_VIP);
+    int tokens = GetEntProp(client, Prop_Send, "m_nRecievedTokens");
+    int counts = 0;
+    switch (g_iServerMod)
+    {
+        case 1002: counts = RoundToFloor(levels * 1.5);
+        case 1050: counts = RoundToFloor(levels * 2.1);
+        case 1051: counts = RoundToFloor(levels * 2.8);
+        case 1052: counts = RoundToFloor(levels * 3.5);
+        default  : counts = levels;
+    }
+    SetEntProp(client, Prop_Send, "m_nRecievedTokens", tokens + counts);
+    Chat(client, "{red}>{green}>{blue}> {yellow}支持者计划: {lime}您可以获得额外的 {purple}%d{lime} 补给点.", counts);
+}
+
+static float DecreaseWeight(int client)
+{
     int level = view_as<int>(g_Client[client].m_VIP);
-    float buff = level * 0.08;
-    SetEntProp(client, Prop_Send, "m_iCarryWeight", RoundToCeil(GetEntProp(client, Prop_Send, "m_iCarryWeight") * buff));
-    Chat(client, "{red}>{green}>{blue}> {yellow}支持者计划: {lime}您的负重已减轻 {green} %d%%", RoundToCeil(buff * 100));
+    return level * 0.08;
 }
 
 static char[] GetExpiredTime(int client)
