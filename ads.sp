@@ -12,6 +12,13 @@ public Plugin myinfo =
     url         = "https://www.kxnrl.com"
 };
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-Advertisement");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();

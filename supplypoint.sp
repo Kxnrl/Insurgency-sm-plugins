@@ -15,6 +15,13 @@ public Plugin myinfo =
 
 #define SUPPLY 50
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-SupplyPoint");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     // Supply

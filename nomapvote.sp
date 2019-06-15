@@ -18,6 +18,13 @@ static ConVar mp_gamemode = null;
 
 static ArrayList histories = null;
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-NoMapVote");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();

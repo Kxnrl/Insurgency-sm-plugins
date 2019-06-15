@@ -22,6 +22,15 @@ static int   g_iServerId = -1;
 
 static int   g_iOffset   = -1;
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-NoobProtector");
+
+    MarkNativeAsOptional("Ins_GetSupporter");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();

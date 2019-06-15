@@ -52,6 +52,16 @@ enum Message_Type
     Couple_Divorce      = 505,
     Couple_MarriageSeek = 506,
 
+    /* VIP/Donator */
+    Vip_LoadUser        = 601,
+    Vip_LoadAll         = 602,
+    Vip_FromClient      = 603,
+
+    /* Client */
+    Client_ForwardUser  = 701,
+    Client_HeartBeat    = 702,
+    Client_S2S          = 703,
+
     /* Analytics */
     
     // Global

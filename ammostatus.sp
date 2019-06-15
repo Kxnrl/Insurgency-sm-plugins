@@ -27,6 +27,13 @@ LIN WIN      Function
 static int g_iAmmoOffset;
 static Handle g_SDKGetClip;
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-AmmoStatus");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     if (GetEngineVersion() != Engine_Insurgency)

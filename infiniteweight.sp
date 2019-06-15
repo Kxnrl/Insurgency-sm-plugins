@@ -15,6 +15,13 @@ public Plugin myinfo =
 
 static bool g_bSpawnZone[MAXPLAYERS+1];
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-MoreInvWeight");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     // weight

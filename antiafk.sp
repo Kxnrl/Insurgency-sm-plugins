@@ -21,6 +21,13 @@ enum struct client_info_t
 
 static client_info_t g_Client[MAXPLAYERS+1];
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+    RegPluginLibrary("Insurgency-AntiAFK");
+
+    return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
     SMUitls_InitUserMessage();
