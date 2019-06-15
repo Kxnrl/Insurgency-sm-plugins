@@ -38,4 +38,8 @@ echo building supplypoint
 spcomp.exe -E -v0 supplypoint.sp    -o"./compiled/supplypoint.smx"
 
 echo.
+echo building supporter
+spcomp.exe -E -v0 supporter.sp      -o"./compiled/supporter.smx"
+
+echo.
 pause

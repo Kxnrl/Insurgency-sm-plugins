@@ -6,6 +6,7 @@
 #include <sdkhooks>
 
 #include <insurgency>
+#include <ins_supporter>
 
 public Plugin myinfo = 
 {
@@ -79,12 +80,12 @@ public Action Event_TraceAlive(int victim, int &attacker, int &inflictor, float 
             {
                 case Armor_Light:
                 {
-                    damage *= 0.8;
+                    damage *= 0.75;
                     return Plugin_Changed;
                 }
                 case Armor_Heavy:
                 {
-                    damage *= 0.6;
+                    damage *= 0.55;
                     return Plugin_Changed;
                 }
                 case Armor_None : return Plugin_Continue;
@@ -95,7 +96,7 @@ public Action Event_TraceAlive(int victim, int &attacker, int &inflictor, float 
         if (attacker == victim)
             return Plugin_Continue;
 
-        if (GetGameTime() - g_fSpawnTime[victim] <= 8.0)
+        if (GetGameTime() - g_fSpawnTime[victim] <= GetProtectTime(victim))
         {
             if (IsClientInGame(attacker))
             {
@@ -112,4 +113,18 @@ public Action Event_TraceAlive(int victim, int &attacker, int &inflictor, float 
 stock CINSArmorType GetPlayerArmorType(int client)
 {
     return view_as<CINSArmorType>(GetEntData(client, g_iOffset + (4 * view_as<int>(m_Gear_Armor))));
+}
+
+stock float GetProtectTime(int client)
+{
+    int level = view_as<int>(Vip(client));
+    return 8.0 + level * 1.5;
+}
+
+stock vip_t Vip(int client)
+{
+    if (!LibraryExists("Insurgency-Supporter"))
+        return vip_None;
+
+    return Ins_GetSupporter(client);
 }
