@@ -6,17 +6,8 @@
 
 #define PERMANENT 2147483647
 
-enum vip_t
-{
-    vip_None        = 0,
-    vip_Monthly     = 1,
-    vip_Quarterly   = 2,
-    vip_Yearly      = 3,
-    vip_Permanently = 4
-};
-
-native vip_t Ins_GetSupporter(int client);
-native int   Ins_GetSupporterExpiredDate(int client);
+native int Ins_GetSupporter(int client);
+native int Ins_GetSupporterExpiredDate(int client);
 
 public SharedPlugin __pl_Insurgency_Supporter =
 {

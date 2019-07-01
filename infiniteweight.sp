@@ -49,4 +49,4 @@ public void Event_Enter(Event e, const char[] name, bool dB)
 public void Event_Exited(Event e, const char[] name, bool dB)
 {
     g_bSpawnZone[GetClientOfUserId(e.GetInt("userid"))] = false;
-}
+} 

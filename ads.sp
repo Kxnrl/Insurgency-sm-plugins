@@ -67,6 +67,7 @@ public Action Timer_ServerAds(Handle timer)
         case 0: ChatAll("QQ群: {green}385224955");
         case 1: ChatAll("官方网站: {green}https://magicgirl.net");
         case 2: ChatAll("按Y输入{green}!sign{white}即可进行签到");
+        case 3: ChatAll("{green}支持者计划现已加入豪华套餐, 详情加Q群385224955");
     }
 
     if (++index > 2)

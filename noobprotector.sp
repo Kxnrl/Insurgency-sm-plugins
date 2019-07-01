@@ -117,14 +117,14 @@ stock CINSArmorType GetPlayerArmorType(int client)
 
 stock float GetProtectTime(int client)
 {
-    int level = view_as<int>(Vip(client));
+    int level = Vip(client);
     return 8.0 + level * 1.5;
 }
 
-stock vip_t Vip(int client)
+stock int Vip(int client)
 {
     if (!LibraryExists("Insurgency-Supporter"))
-        return vip_None;
+        return 0;
 
     return Ins_GetSupporter(client);
 }

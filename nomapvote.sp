@@ -34,7 +34,7 @@ public void OnPluginStart()
 
     if (!AddCommandListener(Command_CallVote, "callvote"))
         SetFailState("Failed to Hook command \"callvote\".");
-    
+
     BuildPath(Path_SM, logFile, 128, "logs/callvote.log");
     
     mp_gamemode = FindConVar("mp_gamemode");

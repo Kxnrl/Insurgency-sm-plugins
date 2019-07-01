@@ -5,6 +5,7 @@
 #include <sdkhooks>
 
 #include <insurgency>
+#include <ins_supporter>
 
 public Plugin myinfo = 
 {
@@ -36,6 +37,9 @@ public void OnPluginStart()
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+    if (IsPVE())
+        return;
+
     if (strcmp(classname, "sec_nightvision") == 0 || strcmp(classname, "ins_nightvision") == 0)
     {
         // 1 frame
@@ -56,13 +60,18 @@ void Frame_Created(int ref)
     {
         if (HasPlayerAccessory(owner))
         {
-            Chat(owner, "{red}本服务器已禁用夜视仪");
-            EasyMissionHint(owner, 20.0, Icon_alert_red, 233, 0, 0, "本服务器禁止使用夜视仪");
+            if (Ins_GetSupporter(owner) != 0)
+            {
+                Chat(owner, "{red}>{green}>{blue}> {yellow}支持者计划: {green}已允许使用夜视仪.");
+                return;
+            }
+
+            Chat(owner, "{red}本服务器已禁用夜视仪[Supporter除外]");
+            EasyMissionHint(owner, 20.0, Icon_alert_red, 233, 0, 0, "本服务器禁止使用夜视仪[Supporter除外]");
 
             SetEntData(owner, g_iOffset + (4 * view_as<int>(m_Gear_Glass)), -1, 4, true);
         }
-        else
-            LogError("Found nvgs but wrong ent data on owner class base.");
+        else LogError("Found nvgs but wrong ent data on owner class base.");
     }
 
     AcceptEntityInput(entity, "KillHierarchy");
@@ -71,4 +80,16 @@ void Frame_Created(int ref)
 stock bool HasPlayerAccessory(int client)
 {
     return view_as<CINSGearGlass>(GetEntData(client, g_iOffset + (4 * view_as<int>(m_Gear_Glass)))) == m_Glass_Nvgs;
+}
+
+stock bool IsPVE()
+{
+    CINSGamemode mode = Ins_GetGameMode();
+
+    return
+            mode == GM_Conquer      ||
+            mode == GM_CheckPoint   ||
+            mode == GM_Hunt         ||
+            mode == GM_Outpost      ||
+            mode == GM_Survival;
 }

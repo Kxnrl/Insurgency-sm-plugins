@@ -109,3 +109,66 @@ enum CINSArmorType
     Armor_Light = 2,
     Armor_Heavy = 4,
 }
+
+enum CINSGamemode
+{
+    // PVE
+    GM_Conquer,
+    GM_CheckPoint,
+    GM_Hunt,
+    GM_Outpost,
+    GM_Survival,
+
+    //PVP
+    GM_Push,
+    GM_Skirmish,
+    GM_Occupy,
+    GM_Firefight,
+    GM_Ambush,
+    GM_Elimination,
+
+    // Err
+    GM_Unknown
+}
+
+stock CINSGamemode Ins_GetGameMode()
+{
+    static ConVar mp_gamemode = null;
+    if (mp_gamemode == null)
+        mp_gamemode = FindConVar("mp_gamemode");
+
+    static char mode[32];
+    mp_gamemode.GetString(mode, 32);
+
+    if (strcmp(mode, "conquer")     == 0)
+        return GM_Conquer;
+
+    if (strcmp(mode, "checkpoint")  == 0)
+        return GM_CheckPoint;
+
+    if (strcmp(mode, "hunt")        == 0)
+        return GM_Hunt;
+
+    if (strcmp(mode, "outpost")     == 0)
+        return GM_Outpost;
+
+    if (strcmp(mode, "survival")    == 0)
+        return GM_Survival;
+
+    if (strcmp(mode, "push")    == 0)
+        return GM_Push;
+
+    if (strcmp(mode, "skirmish")    == 0)
+        return GM_Skirmish;
+
+    if (strcmp(mode, "occupy")    == 0)
+        return GM_Occupy;
+
+    if (strcmp(mode, "firefight")    == 0)
+        return GM_Firefight;
+
+    if (strcmp(mode, "ambush")    == 0)
+        return GM_Ambush;
+
+    return GM_Unknown;
+}
