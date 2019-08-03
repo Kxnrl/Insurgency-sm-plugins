@@ -14,6 +14,10 @@ echo building antiafk
 spcomp.exe -E -v0 antiafk.sp        -o"./compiled/antiafk.smx"
 
 echo.
+echo building anticheat
+spcomp.exe -E -v0 anticheat.sp      -o"./compiled/anticheat.smx"
+
+echo.
 echo building infiniteweight
 spcomp.exe -E -v0 infiniteweight.sp -o"./compiled/infiniteweight.smx"
 
