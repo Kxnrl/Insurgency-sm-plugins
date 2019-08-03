@@ -29,6 +29,7 @@ enum struct data_t
     bool m_bWeight;
     int m_iWeight;
     int m_iKicker;
+    int m_iOldTeam;
 };
 
 data_t g_Client[MAXPLAYERS+1];
@@ -75,11 +76,12 @@ public void OnPluginStart()
     g_smCooldown.Bans = new StringMap();
 
     HookEvent("player_spawn",   Event_Spawned, EventHookMode_Post);
-    HookEvent("player_team",    Event_Team,    EventHookMode_Post);
     HookEvent("weapon_deploy",  Event_Deploy,  EventHookMode_Post);
 
     RegConsoleCmd("spt", CmdHandler);
     RegConsoleCmd("vip", CmdHandler);
+    
+    AddCommandListener(CommandListener_Team, "jointeam");
 }
 
 public void KCF_OnServerLoaded(int sid, int mod)
@@ -104,10 +106,11 @@ public void OnClientDisconnect_Post(int client)
 
 static void resetClient(int client)
 {
-    g_Client[client].m_Loaded  = false;
-    g_Client[client].m_VIP     = 0;
-    g_Client[client].m_Expired = 0;
-    g_Client[client].m_iKicker = 0;
+    g_Client[client].m_Loaded   = false;
+    g_Client[client].m_VIP      = 0;
+    g_Client[client].m_Expired  = 0;
+    g_Client[client].m_iKicker  = 0;
+    g_Client[client].m_iOldTeam = 0;
 }
 
 static void fetchClientData(int pid)
@@ -146,6 +149,19 @@ static void LoadClientData()
     g_Client[client].m_Loaded = true;
     g_Client[client].m_VIP = l;
 
+    if (e <= GetTime())
+    {
+        // expired
+        g_Client[client].m_VIP = 0;
+    }
+
+    // reserve slot
+    if (g_Client[client].m_VIP < 1 && GetPlayers(false, false) > 31 && !KCF_Admin_IsClientAdmin(client))
+    {
+        KickClient(client, "服务器已满\n很抱歉, 您无权使用支持者进服通道\n成为支持者请加QQ群[385224955]");
+        return;
+    }
+
     // printMessage
     CreateTimer(8.0, WelcomeMessage, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 }
@@ -171,6 +187,7 @@ public Action WelcomeMessage(Handle timer, int userid)
         default:
         {
             Chat(client, "{green}欢迎回来, 您的支持者计划到期时间为: {orange}%s {green}, Level: {orange} %d", GetExpiredTime(client), g_Client[client].m_VIP);
+            Chat(client, "{green}按Y输入{red}!spt{green}或{red}!vip{green}即可打开支持者菜单");
             EarnSupplyPoint(client);
         }
     }
@@ -226,6 +243,9 @@ static void FrameFilter(int userid)
     }
 
     SetClientName(client, buffer);
+
+    if (IsPlayerAlive(client))
+        g_Client[client].m_iOldTeam = GetClientTeam(client);
 }
 
 public void Event_Deploy(Event e, const char[] name, bool dB)
@@ -268,14 +288,6 @@ static void FrameWeight(int userid)
 
     g_Client[client].m_bWeight = true;
     g_Client[client].m_iWeight = GetEntProp(client, Prop_Send, "m_iCarryWeight");
-}
-
-public void Event_Team(Event e, const char[] name, bool dB)
-{
-    if (e.GetBool("disconnect") || e.GetInt("oldteam") == e.GetInt("team"))
-        return;
-
-    EarnSupplyPoint(GetClientOfUserId(e.GetInt("userid")));
 }
 
 static void EarnSupplyPoint(int client)
@@ -350,7 +362,7 @@ static void SupporterMenu(int client)
 
     FormatEx(buffer, 128, "等级: %d", g_Client[client].m_VIP);
     panel.DrawText(buffer);
-    FormatEx(buffer, 128, "到期: %d", GetExpiredTime(client));
+    FormatEx(buffer, 128, "到期: %s", GetExpiredTime(client));
     panel.DrawText(buffer);
     panel.DrawText("    ");
 
@@ -384,7 +396,7 @@ public int PanelHandler(Menu menu, MenuAction action, int client, int slot)
         {
             case 0: KickMenu(client);
             case 1: BansMenu(client);
-            case 2: Chat(client, "功能已被禁用...");
+            case 2: Chat(client, "{silve}您的等级不够{red}5{silve}级,不能使用本功能...");
         }
     }
 }
@@ -529,4 +541,36 @@ static void SetCooldown(int client, int type)
         case 0: g_smCooldown.Kick.SetValue(steamid, GetTime() + 3600 * 3, true);
         case 1: g_smCooldown.Bans.SetValue(steamid, GetTime() + 3600 * 3, true);
     }
+}
+
+public Action CommandListener_Team(int client, const char[] command, int argc)
+{
+    if(!ClientIsValid(client) || argc < 1)
+        return Plugin_Handled;
+
+    char arg[4];
+    GetCmdArg(1, arg, 4);
+    int newteam = StringToInt(arg);
+    int oldteam = GetClientTeam(client);
+
+    if (g_Client[client].m_VIP < 1)
+    {
+        if (newteam == 1)
+        {
+            g_Client[client].m_iOldTeam = oldteam;
+            ChangeClientTeam(client, newteam);
+        }
+        else if (newteam != oldteam)
+        {
+            Chat(client, "{red}很抱歉, 您的队伍已被锁定...");
+            Chat(client, "{green}成为支持者解锁本功能...");
+            if (IsPlayerAlive(client))
+                ForcePlayerSuicide(client);
+            ChangeClientTeam(client, g_Client[client].m_iOldTeam == 0 ? oldteam : g_Client[client].m_iOldTeam);
+        }
+        return Plugin_Handled;
+    }
+
+    ChangeClientTeam(client, newteam);
+    return Plugin_Handled;
 }
